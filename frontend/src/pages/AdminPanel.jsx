@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
-import { LogOut, Plus, Trash2 } from 'lucide-react';
+import { LogOut, Plus, Trash2, Bell } from 'lucide-react';
 
 const AdminPanel = () => {
     const [auditoriums, setAuditoriums] = useState([]);
     const [bookings, setBookings] = useState([]);
     const [auditLogs, setAuditLogs] = useState([]);
-    
+    const [notifications, setNotifications] = useState([]);
+    const [showNotifications, setShowNotifications] = useState(false);
+
     const [name, setName] = useState('');
     const [campus, setCampus] = useState('north');
     const [capacity, setCapacity] = useState('');
@@ -17,14 +19,16 @@ const AdminPanel = () => {
 
     const fetchData = async () => {
         try {
-            const [audsRes, booksRes, logsRes] = await Promise.all([
+            const [audsRes, booksRes, logsRes, notifsRes] = await Promise.all([
                 api.get('auditoriums/'),
                 api.get('bookings/'),
-                api.get('auditlogs/')
+                api.get('auditlogs/'),
+                api.get('notifications/')
             ]);
             setAuditoriums(audsRes.data);
             setBookings(booksRes.data);
             setAuditLogs(logsRes.data);
+            setNotifications(notifsRes.data);
         } catch (err) {
             console.error(err);
         }
@@ -79,6 +83,20 @@ const AdminPanel = () => {
         }
     };
 
+    const unreadCount = notifications.filter(n => !n.is_read).length;
+
+    const toggleNotifications = async () => {
+        setShowNotifications(!showNotifications);
+        if (!showNotifications && unreadCount > 0) {
+            try {
+                await api.post('notifications/mark_all_read/');
+                setNotifications(notifications.map(n => ({ ...n, is_read: true })));
+            } catch (err) {
+                console.error(err);
+            }
+        }
+    };
+
     return (
         <div>
             <nav className="nav-bar fade-in">
@@ -86,10 +104,30 @@ const AdminPanel = () => {
                     <img src="/logo.png" alt="NIE College Logo" />
                     <h1>Admin Panel - NIE Auditorium Booking</h1>
                 </div>
-                <button className="btn-danger" onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <LogOut size={18} /> Logout
-                </button>
+                <div className="nav-links" style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                    <button className="btn-secondary" style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onClick={toggleNotifications}>
+                        <Bell size={18} />
+                        Notifications
+                        {unreadCount > 0 && <span style={{ background: 'var(--danger)', color: 'white', borderRadius: '50%', padding: '0.1rem 0.4rem', fontSize: '0.75rem' }}>{unreadCount}</span>}
+                    </button>
+                    <button className="btn-danger" onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <LogOut size={18} /> Logout
+                    </button>
+                </div>
             </nav>
+
+            {showNotifications && (
+                <div className="glass-panel" style={{ position: 'absolute', right: '2rem', top: '5rem', width: '350px', zIndex: 10, padding: '1rem', maxHeight: '400px', overflowY: 'auto' }}>
+                    <h3 style={{ marginBottom: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>Notifications</h3>
+                    {notifications.length === 0 ? <p style={{ color: 'var(--text-muted)' }}>No notifications</p> : null}
+                    {notifications.map(n => (
+                        <div key={n.id} className={`notification-item ${n.is_read ? '' : 'unread'}`}>
+                            <p style={{ fontSize: '0.9rem' }}>{n.message}</p>
+                            <small style={{ color: 'var(--text-muted)' }}>{new Date(n.created_at).toLocaleString()}</small>
+                        </div>
+                    ))}
+                </div>
+            )}
 
             <div className="admin-layout">
                 <div className="glass-panel">
@@ -162,19 +200,19 @@ const AdminPanel = () => {
                                 const formattedDate = `${day}/${month}/${year}`;
                                 const startTime = b.start_time.slice(0, 5);
                                 const endTime = b.end_time.slice(0, 5);
-                                
+
                                 return (
                                     <tr key={b.id}>
                                         <td>{new Date(b.submitted_at).toLocaleString('en-GB')}</td>
                                         <td>
-                                            <strong>{b.requester_name}</strong><br/>
+                                            <strong>{b.requester_name}</strong><br />
                                             <small style={{ color: 'var(--text-muted)' }}>{b.requester_email}</small>
                                         </td>
                                         <td>
-                                            <strong>{b.event_name}</strong><br/>
+                                            <strong>{b.event_name}</strong><br />
                                             <small style={{ color: 'var(--text-muted)' }}>{aud?.name} ({aud?.campus})</small>
                                         </td>
-                                        <td>{formattedDate}<br/><small>{startTime} - {endTime}</small></td>
+                                        <td>{formattedDate}<br /><small>{startTime} - {endTime}</small></td>
                                         <td><span className={`badge badge-${b.status}`}>{b.status}</span></td>
                                         <td>
                                             {b.status === 'pending' && (

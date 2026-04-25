@@ -8,7 +8,7 @@ const Dashboard = () => {
     const [bookings, setBookings] = useState([]);
     const [notifications, setNotifications] = useState([]);
     const [showNotifications, setShowNotifications] = useState(false);
-    
+
     const [selectedAuditorium, setSelectedAuditorium] = useState('');
     const [eventName, setEventName] = useState('');
     const [date, setDate] = useState('');
@@ -29,7 +29,7 @@ const Dashboard = () => {
 
     const nextMonth = () => setCalendarDate(new Date(currentYear, currentMonth + 1, 1));
     const prevMonth = () => setCalendarDate(new Date(currentYear, currentMonth - 1, 1));
-    
+
     const calendarDays = [];
     for (let i = 0; i < firstDayOfMonth; i++) {
         calendarDays.push(null);
@@ -118,7 +118,7 @@ const Dashboard = () => {
             </nav>
 
             {showNotifications && (
-                <div className="glass-panel" style={{ position: 'absolute', right: '2rem', top: '5rem', width: '350px', zIndex: 10, padding: '1rem' }}>
+                <div className="glass-panel" style={{ position: 'absolute', right: '2rem', top: '5rem', width: '350px', zIndex: 10, padding: '1rem', maxHeight: '400px', overflowY: 'auto' }}>
                     <h3 style={{ marginBottom: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>Notifications</h3>
                     {notifications.length === 0 ? <p style={{ color: 'var(--text-muted)' }}>No notifications</p> : null}
                     {notifications.map(n => (
@@ -199,7 +199,7 @@ const Dashboard = () => {
                                         const formattedDate = `${day}/${month}/${year}`;
                                         const startTime = b.start_time.slice(0, 5);
                                         const endTime = b.end_time.slice(0, 5);
-                                        
+
                                         return (
                                             <tr key={b.id}>
                                                 <td>{aud?.name} ({aud?.campus})</td>
@@ -232,16 +232,16 @@ const Dashboard = () => {
                             ))}
                             {calendarDays.map((day, idx) => {
                                 if (!day) return <div key={`empty-${idx}`} />;
-                                
+
                                 const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                                 const bookingsForDay = allApprovedBookings.filter(b => b.date === dateStr);
-                                
+
                                 if (bookingsForDay.length > 0) {
                                     return (
-                                        <div key={idx} style={{ 
-                                            padding: '0.5rem', 
-                                            background: 'var(--primary)', 
-                                            color: 'white', 
+                                        <div key={idx} style={{
+                                            padding: '0.5rem',
+                                            background: 'var(--primary)',
+                                            color: 'white',
                                             borderRadius: '0.25rem',
                                             display: 'flex',
                                             flexDirection: 'column',
@@ -260,11 +260,11 @@ const Dashboard = () => {
                                         </div>
                                     );
                                 }
-                                
+
                                 return (
-                                    <div key={idx} style={{ 
-                                        padding: '0.5rem', 
-                                        background: '#f8fafc', 
+                                    <div key={idx} style={{
+                                        padding: '0.5rem',
+                                        background: '#f8fafc',
                                         border: '1px solid var(--border)',
                                         borderRadius: '0.25rem',
                                         minHeight: '40px',

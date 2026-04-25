@@ -86,7 +86,16 @@ class BookingViewSet(viewsets.ModelViewSet):
         if overlapping.exists():
             raise serializers.ValidationError('This auditorium is already booked for the specified time slot.')
 
-        serializer.save(user=self.request.user)
+        booking = serializer.save(user=self.request.user)
+
+        # Notify all admins
+        admins = User.objects.filter(role='admin')
+        for admin in admins:
+            Notification.objects.create(
+                user=admin,
+                booking=booking,
+                message=f'New booking request from {self.request.user.username} for {auditorium.name}.'
+            )
 
     def partial_update(self, request, *args, **kwargs):
         if request.user.role != 'admin':
